@@ -1,0 +1,13 @@
+<stack>
+  <description brief="android_pr2_wifi">android_pr2_wifi</description>
+  <author>Maintained by Austin Hendrix</author>
+  <license>BSD</license>  
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/android_pr2_wifi</url>
+  <depend stack="pr2_network_management" /> <!-- pr2_network_management -->
+  <depend stack="ros" />
+  <depend stack="rosjava_core" /> <!-- rosjava -->
+
+  <version>0.1.0</version>
+
+</stack>

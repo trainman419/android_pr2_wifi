@@ -1,0 +1,16 @@
+<package>
+  <description brief="android_pr2_wifi">
+
+     android_pr2_wifi
+
+  </description>
+  <author>Austin Hendrix</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/android_pr2_wifi</url>
+  <depend package="pr2_network_management"/>
+  <depend package="rosjava"/>
+
+</package>
+
+

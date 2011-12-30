@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project basedir="." name="android_pr2_wifi" default="deps">
+   <property file="ros.properties"/>
+
+   <target name="deps">
+      <mkdir dir="deps"/>
+      <copy todir="deps" flatten="true">
+         <filelist dir="/" files="${ros.compile.jarfileset}"/>
+      </copy>
+   </target>
+</project>
