@@ -1,11 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <project basedir="." name="android_pr2_wifi" default="deps">
    <property file="ros.properties"/>
+   <property name="libdir" value="android/libs"/>
 
    <target name="deps">
-      <mkdir dir="deps"/>
-      <copy todir="deps" flatten="true">
+      <mkdir dir="${libdir}"/>
+      <copy todir="${libdir}" flatten="true">
          <filelist dir="/" files="${ros.compile.jarfileset}"/>
       </copy>
+      <!--
+      <copy file="${ros.pkg.appmanandroid.dir}/library/bin/appmanandroid.jar" todir="${libdir}"/>
+      -->
    </target>
 </project>

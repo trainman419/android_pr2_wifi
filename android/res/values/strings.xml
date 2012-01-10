@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, PR2WifiActivity!</string>
+    <string name="app_name">PR2 Wifi</string>
+    <string name="enable">Enable</string>
+    <string name="ssid">SSID</string>
+    <string name="local">Local Wifi (Cradlepoint)</string>
+    <string name="client">Wifi Client (610N)</string>
+    <string name="security">Security</string>
+    <string-array name="security_types">
+        <item>None</item>
+        <item>WPA2</item>
+    </string-array>
+    <string name="passphrase">Passphrase</string>
+    <string name="update">Update</string>
+
+</resources>
