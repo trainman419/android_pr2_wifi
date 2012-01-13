@@ -322,7 +322,8 @@ public class PR2WifiActivity extends RosAppActivity {
     protected void onNodeCreate(Node node) {
     	super.onNodeCreate(node);
 		local_sub = node.newSubscriber("pr2_wifi/local_status", 
-				"pr2_network_management/WifiStatus", new MessageListener<WifiStatus>() {
+				"pr2_network_management/WifiStatus");
+		local_sub.addMessageListener(new MessageListener<WifiStatus>() {
 					public void onNewMessage(WifiStatus arg0) {
 						Log.i("PR2WifiActivity", "Got local state. SSID: " + arg0.ssid);
 						if( arg0.ssid.equals(ssid) ) {
@@ -339,7 +340,8 @@ public class PR2WifiActivity extends RosAppActivity {
 				}
 		);
 		client_sub = node.newSubscriber("pr2_wifi/client_status", 
-				"pr2_network_management/WifiStatus", new MessageListener<WifiStatus>() {
+				"pr2_network_management/WifiStatus");
+		client_sub.addMessageListener(new MessageListener<WifiStatus>() {
 					public void onNewMessage(WifiStatus arg0) {
 						Log.i("PR2WifiActivity", "Got client state. SSID: " + arg0.ssid);
 						mHandler.sendMessage(mHandler.obtainMessage(CLIENT_MSG, arg0));
