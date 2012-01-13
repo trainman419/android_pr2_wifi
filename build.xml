@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." name="android_pr2_wifi" default="deps">
+<project basedir="." name="android_pr2_wifi" default="compile">
    <property file="ros.properties"/>
+   <import file="${ros.pkg.appmanandroid.dir}/build_app.xml" />
+
+   <!-- 
    <property name="libdir" value="android/libs"/>
 
    <target name="deps">
@@ -8,8 +11,6 @@
       <copy todir="${libdir}" flatten="true">
          <filelist dir="/" files="${ros.compile.jarfileset}"/>
       </copy>
-      <!--
-      <copy file="${ros.pkg.appmanandroid.dir}/library/bin/appmanandroid.jar" todir="${libdir}"/>
-      -->
    </target>
+   -->
 </project>

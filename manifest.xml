@@ -8,9 +8,13 @@
   <license>BSD</license>
   <review status="unreviewed" notes=""/>
   <url>http://ros.org/wiki/android_pr2_wifi</url>
+  <depend package="appmanandroid"/>
   <depend package="pr2_network_management"/>
   <depend package="rosjava"/>
-  <depend package="appmanandroid"/>
+
+  <export>
+    <rosjava-android-app target="android-10" />
+  </export>
 
 </package>
 

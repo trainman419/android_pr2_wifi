@@ -1,5 +1,8 @@
 .classpath
 .project
 dependencies.xml
-deps
 ros.properties
+.settings
+bin
+gen
+libs
