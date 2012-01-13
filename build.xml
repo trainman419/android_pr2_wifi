@@ -2,15 +2,4 @@
 <project basedir="." name="android_pr2_wifi" default="compile">
    <property file="ros.properties"/>
    <import file="${ros.pkg.appmanandroid.dir}/build_app.xml" />
-
-   <!-- 
-   <property name="libdir" value="android/libs"/>
-
-   <target name="deps">
-      <mkdir dir="${libdir}"/>
-      <copy todir="${libdir}" flatten="true">
-         <filelist dir="/" files="${ros.compile.jarfileset}"/>
-      </copy>
-   </target>
-   -->
 </project>
