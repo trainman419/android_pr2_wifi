@@ -1,13 +1,14 @@
 package ros.android.pr2wifi;
 
 import org.ros.exception.RemoteException;
-import org.ros.exception.ServiceNotFoundException;
+import org.ros.message.MessageListener;
+import org.ros.message.pr2_network_management.WifiStatus;
 import org.ros.node.Node;
 import org.ros.node.service.ServiceClient;
 import org.ros.node.service.ServiceResponseListener;
+import org.ros.node.topic.Subscriber;
 import org.ros.service.pr2_network_management.Wifi;
 import org.ros.service.pr2_network_management.Wifi.Response;
-import org.ros.service.pr2_network_management.WifiGet;
 
 import ros.android.activity.RosAppActivity;
 import android.app.Activity;
@@ -34,15 +35,14 @@ import android.widget.Spinner;
 import android.widget.Toast;
 
 public class PR2WifiActivity extends RosAppActivity {
-	
-	// TODO: get service clients on demand so that they don't go stale
-	// if the service disappears and reappears
-	private ServiceClient<Wifi.Request, Wifi.Response> local_srv;
-	private ServiceClient<Wifi.Request, Wifi.Response> client_srv;
-	
+
 	private String ssid; // the SSID that the app is connected to
 	private boolean local_allow;
 	private boolean client_allow;
+	
+	// subscribers
+	private Subscriber<WifiStatus> local_sub;
+	private Subscriber<WifiStatus> client_sub;
 	
 	private Handler mHandler;
 	public static final int TOAST_MSG = 1;
@@ -58,9 +58,6 @@ public class PR2WifiActivity extends RosAppActivity {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
-    	local_srv = null;
-    	client_srv = null;
-    	
     	// set up a temporary handler so that we have something to deal with
     	// errors that may happen on startup
     	mHandler = new Handler() {
@@ -101,7 +98,7 @@ public class PR2WifiActivity extends RosAppActivity {
         // message handler; so that UI updates happen on the UI thread
         mHandler = new Handler() {
         	public void handleMessage(Message m) {
-        		WifiGet.Response r;
+        		WifiStatus r;
         		switch(m.what) {
         		case TOAST_MSG:
     				Toast.makeText(getApplicationContext(), m.obj.toString(), 
@@ -109,7 +106,7 @@ public class PR2WifiActivity extends RosAppActivity {
     				Log.d("PR2WifIActivity", "Made toast: " + m.obj.toString());
         			break;
         		case LOCAL_MSG:
-        			r = (WifiGet.Response)m.obj;
+        			r = (WifiStatus)m.obj;
         			local_ssid.setText(r.ssid);
         			local_enable.setChecked(r.enabled);
         			local_pass.setText(r.passphrase);
@@ -129,7 +126,7 @@ public class PR2WifiActivity extends RosAppActivity {
         			}
         			break;
         		case CLIENT_MSG:
-        			r = (WifiGet.Response)m.obj;
+        			r = (WifiStatus)m.obj;
         			client_ssid.setText(r.ssid);
         			client_pass.setText(r.passphrase);
         			client_security.setSelection(r.security);
@@ -182,29 +179,38 @@ public class PR2WifiActivity extends RosAppActivity {
 				toast(message);
 				
 				// make ROS service call
-				if( null != local_srv ) {
-					Wifi.Request req = new Wifi.Request();
-					req.enabled = enabled;
-					req.ssid = ssid;
-					req.security = (byte)security;
-					req.passphrase = passphrase;
-					local_srv.call(req, 
-							new ServiceResponseListener<Wifi.Response>(){
-								public void onFailure(RemoteException arg0) {
-									String message = "Local wifi update failed";
-									Log.e("PR2WifiActivity", message);
-									toast(message);
+				try {
+					ServiceClient<Wifi.Request, Wifi.Response> local_srv =
+							getNode().newServiceClient("pr2_wifi/local", 
+		        			"pr2_network_management/Wifi");
+					if( null != local_srv ) {
+						Wifi.Request req = new Wifi.Request();
+						req.enabled = enabled;
+						req.ssid = ssid;
+						req.security = (byte)security;
+						req.passphrase = passphrase;
+						local_srv.call(req, 
+								new ServiceResponseListener<Wifi.Response>(){
+									public void onFailure(RemoteException arg0) {
+										String message = "Local wifi update failed";
+										Log.e("PR2WifiActivity", message);
+										toast(message);
+									}
+									public void onSuccess(Response arg0) {
+										String message = "Local wifi update succeeded";
+										Log.i("PR2WifiActivity", message);
+										toast(message);
+									}
 								}
-								public void onSuccess(Response arg0) {
-									String message = "Local wifi update succeeded";
-									Log.i("PR2WifiActivity", message);
-									toast(message);
-								}
-							}
-					);
+						);
+					}
+				} catch (Exception e) {
+					Log.e("PR2WifiActivity", e.toString());
+					toast(e.toString());
 				}
 			}
         });
+        
         
         local_security.setOnItemSelectedListener(new OnItemSelectedListener() {
 			public void onItemSelected(AdapterView<?> arg0, View arg1,
@@ -249,25 +255,33 @@ public class PR2WifiActivity extends RosAppActivity {
         		toast(message);
         		
         		// make ROS service call
-        		if( null != client_srv ) {
-        			Wifi.Request req = new Wifi.Request();
-        			req.enabled = true;
-        			req.ssid = ssid;
-        			req.security = (byte)security; //security;
-        			req.passphrase = passphrase;
-        			
-        			client_srv.call(req, new ServiceResponseListener<Wifi.Response>() {
-						public void onFailure(RemoteException arg0) {
-							String message = "Client wifi update failed";
-							Log.e("PR2WifiActivity", message);
-							toast(message);
-						}
-						public void onSuccess(Response arg0) {
-							String message = "Client wifi update succeeded";
-							Log.i("PR2WifiActivity", message);
-							toast(message);
-						}
-        			});
+        		try {
+	        		ServiceClient<Wifi.Request, Wifi.Response> client_srv = 
+	        				getNode().newServiceClient("pr2_wifi/client", 
+	            			"pr2_network_management/Wifi");
+	        		if( null != client_srv ) {
+	        			Wifi.Request req = new Wifi.Request();
+	        			req.enabled = true;
+	        			req.ssid = ssid;
+	        			req.security = (byte)security; //security;
+	        			req.passphrase = passphrase;
+	        			
+	        			client_srv.call(req, new ServiceResponseListener<Wifi.Response>() {
+							public void onFailure(RemoteException arg0) {
+								String message = "Client wifi update failed";
+								Log.e("PR2WifiActivity", message);
+								toast(message);
+							}
+							public void onSuccess(Response arg0) {
+								String message = "Client wifi update succeeded";
+								Log.i("PR2WifiActivity", message);
+								toast(message);
+							}
+	        			});
+	        		}
+        		} catch (Exception e) {
+					Log.e("PR2WifiActivity", e.toString());
+					toast(e.toString());
         		}
         	}
         });
@@ -307,60 +321,42 @@ public class PR2WifiActivity extends RosAppActivity {
     @Override
     protected void onNodeCreate(Node node) {
     	super.onNodeCreate(node);
-    	try {
-    		local_srv = node.newServiceClient("pr2_wifi/local", 
-    			"pr2_network_management/Wifi");
-    		client_srv = node.newServiceClient("pr2_wifi/client", 
-    			"pr2_network_management/Wifi");
-    		
-    		ServiceClient<WifiGet.Request, WifiGet.Response> get;
-    		WifiGet.Request req;
-    		get = node.newServiceClient("pr2_wifi/local_get",
-    				"pr2_network_management/WifiGet");
-    		req = new WifiGet.Request();
-    		get.call(req, new ServiceResponseListener<WifiGet.Response>() {
-				public void onFailure(RemoteException arg0) {
-					Log.e("PR2WifiActivity", "Failed to get local state");
-				}
-				public void onSuccess(WifiGet.Response arg0) {
-					Log.i("PR2WifiActivity", "Got local state. SSID: " + arg0.ssid);
-					if( arg0.ssid.equals(ssid) ) {
-						Log.i("PR2WifiActivity", "Connected to local wifi");
-						local_allow = false;
-						client_allow = true;
-					} else {
-						Log.i("PR2WifiActivity", "Not connected to local wifi");
-						local_allow = true;
-						client_allow = false;
+		local_sub = node.newSubscriber("pr2_wifi/local_status", 
+				"pr2_network_management/WifiStatus", new MessageListener<WifiStatus>() {
+					public void onNewMessage(WifiStatus arg0) {
+						Log.i("PR2WifiActivity", "Got local state. SSID: " + arg0.ssid);
+						if( arg0.ssid.equals(ssid) ) {
+							Log.i("PR2WifiActivity", "Connected to local wifi");
+							local_allow = false;
+							client_allow = true;
+						} else {
+							Log.i("PR2WifiActivity", "Not connected to local wifi");
+							local_allow = true;
+							client_allow = false;
+						}
+						mHandler.sendMessage(mHandler.obtainMessage(LOCAL_MSG, arg0));
 					}
-					mHandler.sendMessage(mHandler.obtainMessage(LOCAL_MSG, arg0));
 				}
-    		});
-
-    		get = node.newServiceClient("pr2_wifi/client_get",
-    				"pr2_network_management/WifiGet");
-    		req = new WifiGet.Request();
-    		get.call(req, new ServiceResponseListener<WifiGet.Response>() {
-				public void onFailure(RemoteException arg0) {
-					Log.e("PR2WifiActivity", "Failed to get client state");
-				}
-				public void onSuccess(WifiGet.Response arg0) {
-					Log.i("PR2WifiActivity", "Got client state. SSID: " + arg0.ssid);
-					mHandler.sendMessage(mHandler.obtainMessage(CLIENT_MSG, arg0));
-				}
-    		});
-    	
-    	} catch( ServiceNotFoundException e ) {
-    		String message = "Failed to create serice clients: " + e.toString();
-    		Log.e("PR2WifiActivity", message);
-    		toast(message);
-    	}
+		);
+		client_sub = node.newSubscriber("pr2_wifi/client_status", 
+				"pr2_network_management/WifiStatus", new MessageListener<WifiStatus>() {
+					public void onNewMessage(WifiStatus arg0) {
+						Log.i("PR2WifiActivity", "Got client state. SSID: " + arg0.ssid);
+						mHandler.sendMessage(mHandler.obtainMessage(CLIENT_MSG, arg0));
+					}
+	    		}
+		);
+		Log.i("PR2WifiActivity", "subscribers created");
+		Log.i("PR2WifiActivity", "Node URI: " + node.getUri().toString());
+		Log.i("PR2WifiActivity", "local_sub: " + local_sub.toString());
     }
     
     @Override
     protected void onNodeDestroy(Node node) {
+    	local_sub.shutdown();
+    	client_sub.shutdown();
+    	local_sub = null;
+    	client_sub = null;
     	super.onNodeDestroy(node);
-    	local_srv = null;
-    	client_srv = null;
     }
 }
